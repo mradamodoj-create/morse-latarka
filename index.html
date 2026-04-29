@@ -2,28 +2,30 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Morse Latarka</title>
+<title>Morse Flash</title>
 </head>
 
-<body style="text-align:center;font-family:sans-serif;margin-top:40px">
+<body style="margin:0;background:black;color:#00ff00;font-family:monospace;text-align:center">
 
-<h1>🔦 Morse Latarka</h1>
+<h2 style="margin-top:20px">MORSE FLASH SYSTEM</h2>
 
-<input id="text" placeholder="Wpisz tekst" style="font-size:18px;padding:10px;width:80%">
+<input id="text" placeholder="ENTER TEXT"
+style="font-size:18px;padding:10px;width:80%;background:black;color:#00ff00;border:1px solid #00ff00">
 
 <br><br>
 
-<button onclick="startMorse()" style="font-size:20px;padding:15px">
-Start
+<button onclick="startMorse()" style="font-size:18px;padding:12px;background:#00ff00;color:black;border:none">
+START
 </button>
 
-<button onclick="stopMorse()" style="font-size:20px;padding:15px">
-Stop
+<button onclick="stopMorse()" style="font-size:18px;padding:12px;background:#333;color:white;border:none">
+STOP
 </button>
+
+<p id="status">READY</p>
 
 <script>
-let stream;
-let track;
+let stream, track;
 let running = false;
 
 const morseMap = {
@@ -37,11 +39,11 @@ Z:"--..",
 "5":".....","6":"-....","7":"--...","8":"---..","9":"----."
 };
 
-function toMorse(text){
-return text.toUpperCase().split("").map(c=>morseMap[c]||"").join(" ");
+function toMorse(t){
+return t.toUpperCase().split("").map(c=>morseMap[c]||"").join(" ");
 }
 
-async function initCamera(){
+async function initCam(){
 stream = await navigator.mediaDevices.getUserMedia({
 video:{facingMode:"environment"}
 });
@@ -58,42 +60,50 @@ function sleep(ms){
 return new Promise(r=>setTimeout(r,ms));
 }
 
+async function flash(ms){
+await torch(true);
+document.body.style.background="white";
+await sleep(ms);
+await torch(false);
+document.body.style.background="black";
+await sleep(200);
+}
+
 async function startMorse(){
-if(!stream) await initCamera();
+if(!stream) await initCam();
 
 running = true;
 
-const text = document.getElementById("text").value;
-const morse = toMorse(text);
+let text = document.getElementById("text").value;
+let morse = toMorse(text);
+
+document.getElementById("status").innerText="RUNNING...";
 
 for(let i=0;i<morse.length;i++){
 if(!running) break;
 
-const s = morse[i];
+let s = morse[i];
 
 if(s==="."){
-await torch(true);
-await sleep(200);
-await torch(false);
-await sleep(200);
+await flash(150);
 }
 else if(s==="-"){
-await torch(true);
-await sleep(600);
-await torch(false);
-await sleep(200);
+await flash(500);
 }
 else {
-await sleep(400);
+await sleep(300);
 }
 }
 
+document.getElementById("status").innerText="DONE";
 await torch(false);
 }
 
 function stopMorse(){
 running=false;
 torch(false);
+document.body.style.background="black";
+document.getElementById("status").innerText="STOPPED";
 }
 </script>
 
