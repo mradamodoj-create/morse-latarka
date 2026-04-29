@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morse Latarka</title>
+</head>
+
+<body style="text-align:center;font-family:sans-serif;margin-top:40px">
+
+<h1>🔦 Morse Latarka</h1>
+
+<input id="text" placeholder="Wpisz tekst" style="font-size:18px;padding:10px;width:80%">
+
+<br><br>
+
+<button onclick="startMorse()" style="font-size:20px;padding:15px">
+Start
+</button>
+
+<button onclick="stopMorse()" style="font-size:20px;padding:15px">
+Stop
+</button>
+
+<script>
+let stream;
+let track;
+let running = false;
+
+const morseMap = {
+A:".-",B:"-...",C:"-.-.",D:"-..",E:".",
+F:"..-.",G:"--.",H:"....",I:"..",J:".---",
+K:"-.-",L:".-..",M:"--",N:"-.",O:"---",
+P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",
+U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",
+Z:"--..",
+"0":"-----","1":".----","2":"..---","3":"...--","4":"....-",
+"5":".....","6":"-....","7":"--...","8":"---..","9":"----."
+};
+
+function toMorse(text){
+return text.toUpperCase().split("").map(c=>morseMap[c]||"").join(" ");
+}
+
+async function initCamera(){
+stream = await navigator.mediaDevices.getUserMedia({
+video:{facingMode:"environment"}
+});
+track = stream.getVideoTracks()[0];
+}
+
+async function torch(on){
+try{
+await track.applyConstraints({advanced:[{torch:on}]});
+}catch(e){}
+}
+
+function sleep(ms){
+return new Promise(r=>setTimeout(r,ms));
+}
+
+async function startMorse(){
+if(!stream) await initCamera();
+
+running = true;
+
+const text = document.getElementById("text").value;
+const morse = toMorse(text);
+
+for(let i=0;i<morse.length;i++){
+if(!running) break;
+
+const s = morse[i];
+
+if(s==="."){
+await torch(true);
+await sleep(200);
+await torch(false);
+await sleep(200);
+}
+else if(s==="-"){
+await torch(true);
+await sleep(600);
+await torch(false);
+await sleep(200);
+}
+else {
+await sleep(400);
+}
+}
+
+await torch(false);
+}
+
+function stopMorse(){
+running=false;
+torch(false);
+}
+</script>
+
+</body>
+</html>
